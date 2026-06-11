@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>WTG DLP Launch Event</title>
+  <!--
+    This page is the entry point for the OnMessageSend Smart Alerts event.
+    It must be served over HTTPS. The page itself is invisible — it only
+    loads the event handler script.
+
+    Office.js bootstraps the add-in runtime by loading this URL, then
+    calls Office.actions.associate() to wire up onMessageSendHandler.
+  -->
+  <script
+    type="text/javascript"
+    src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js">
+  </script>
+  <script type="text/javascript" src="launchevent.js"></script>
+</head>
+<body>
+  <!-- intentionally blank — this page is never visible to the user -->
+</body>
+</html>

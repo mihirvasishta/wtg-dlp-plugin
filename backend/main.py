@@ -1,0 +1,195 @@
+"""
+WTG DLP Plugin — FastAPI backend
+
+Endpoints:
+  POST /api/dlp/check   — run DLP rules, return violations
+  POST /api/audit/log   — record analyst decision after check
+
+Static files (add-in HTML/JS) are served from ../addin/ so a single process
+hosts both the API and the Office add-in assets.
+
+TLS is terminated here via uvicorn ssl_keyfile / ssl_certfile so OWA can
+load the add-in over HTTPS from the bastion server.
+"""
+from __future__ import annotations
+
+import os
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+from typing import List
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+import config
+from models import DLPCheckRequest, DLPCheckResponse, Violation
+from dlp.data_source import CSVDLPSource
+from dlp.engine import run_checks
+from audit.logger import log_check
+
+
+# ---------------------------------------------------------------------------
+# Application lifecycle
+# ---------------------------------------------------------------------------
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Validate critical paths exist on startup."""
+    dlp_dir = Path(config.DLP_LIST_DIR)
+    audit_dir = Path(config.AUDIT_LOG_PATH).parent
+
+    if not dlp_dir.exists():
+        dlp_dir.mkdir(parents=True, exist_ok=True)
+
+    audit_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f"[startup] DLP list directory : {dlp_dir.resolve()}")
+    print(f"[startup] Audit log          : {Path(config.AUDIT_LOG_PATH).resolve()}")
+    print(f"[startup] CORS origins       : {config.CORS_ORIGINS}")
+    yield
+
+
+# ---------------------------------------------------------------------------
+# App + middleware
+# ---------------------------------------------------------------------------
+
+app = FastAPI(
+    title="WTG DLP Plugin Backend",
+    version="0.1.0",
+    lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=config.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+)
+
+# ---------------------------------------------------------------------------
+# Shared data source instance (one CSV-backed source; swap for RDMDLPSource later)
+# ---------------------------------------------------------------------------
+
+_data_source = CSVDLPSource(dlp_list_dir=config.DLP_LIST_DIR)
+
+
+# ---------------------------------------------------------------------------
+# Routes
+# ---------------------------------------------------------------------------
+
+@app.post("/api/dlp/check", response_model=DLPCheckResponse)
+async def dlp_check(request: DLPCheckRequest):
+    """
+    Run DLP checks for a composed email.
+
+    Called by the Office add-in launchevent.js immediately before send.
+    Returns violations and an allow flag.
+    """
+    try:
+        response = await run_checks(request, _data_source)
+        return response
+    except FileNotFoundError:
+        # No CSV found for this mailbox — fail open with a single warn
+        return DLPCheckResponse(
+            allow=True,
+            violations=[
+                Violation(
+                    rule_id="DLP_LIST_NOT_FOUND",
+                    severity="warn",
+                    title="DLP list not configured",
+                    detail=(
+                        f"No DLP partner list is configured for mailbox "
+                        f"'{request.mailbox_address}'. Contact your administrator."
+                    ),
+                    affected=[request.mailbox_address],
+                )
+            ],
+        )
+    except Exception as exc:
+        # Unexpected error — fail open so backend issues never block mail
+        print(f"[error] DLP check failed: {exc}")
+        return DLPCheckResponse(allow=True, violations=[])
+
+
+class AuditRequest(DLPCheckRequest):
+    """DLPCheckRequest extended with the analyst's final decision."""
+    decision: str               # "sent_clean" | "sent_with_override" | "cancelled" | "blocked"
+    analyst_name: str = ""      # free-text from the task pane UI
+    violations: List[Violation] = []  # echoed back from the /check response
+
+
+@app.post("/api/audit/log", status_code=204)
+async def audit_log(body: AuditRequest):
+    """
+    Record the analyst's decision after a DLP check.
+
+    Called by launchevent.js once the user clicks Send Anyway / Don't Send.
+    Returns 204 No Content — the add-in does not wait for a body.
+    """
+    try:
+        log_check(
+            audit_log_path=config.AUDIT_LOG_PATH,
+            mailbox_address=body.mailbox_address,
+            sender_upn=body.sender_upn,
+            analyst_name=body.analyst_name,
+            recipients={
+                "to": body.recipients.to,
+                "cc": body.recipients.cc,
+                "bcc": body.recipients.bcc,
+            },
+            subject=body.subject,
+            attachment_names=[a.name for a in body.attachments],
+            violations=[v if isinstance(v, dict) else v.model_dump() for v in body.violations],
+            decision=body.decision,
+        )
+    except Exception as exc:
+        # Don't let audit failures surface to the user
+        print(f"[error] Audit log failed: {exc}")
+
+
+# ---------------------------------------------------------------------------
+# Serve add-in static files
+# ---------------------------------------------------------------------------
+
+_addin_dir = Path(__file__).parent.parent / "addin"
+if _addin_dir.exists():
+    app.mount("/addin", StaticFiles(directory=str(_addin_dir), html=True), name="addin")
+
+
+# ---------------------------------------------------------------------------
+# Health check (useful for bastion monitoring)
+# ---------------------------------------------------------------------------
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
+# ---------------------------------------------------------------------------
+# Entry point (uvicorn)
+# ---------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    import uvicorn
+
+    ssl_kwargs = {}
+    if config.CERT_PATH and config.KEY_PATH:
+        # Bastion deployment: uvicorn terminates TLS directly
+        ssl_kwargs = {
+            "ssl_certfile": config.CERT_PATH,
+            "ssl_keyfile": config.KEY_PATH,
+        }
+        print(f"[startup] TLS enabled — cert: {config.CERT_PATH}")
+    else:
+        # Railway / reverse-proxy deployment: TLS terminated upstream; app runs plain HTTP
+        print("[startup] No TLS cert configured — running plain HTTP (expected on Railway)")
+
+    uvicorn.run(
+        "main:app",
+        host=config.HOST,
+        port=config.PORT,
+        **ssl_kwargs,
+    )

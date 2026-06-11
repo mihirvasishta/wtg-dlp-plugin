@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WTG DLP — Violation Details</title>
+  <style>
+    :root {
+      --brand:    #0078d4;   /* Microsoft blue */
+      --warn:     #c4820a;
+      --block:    #c4000a;
+      --bg-warn:  #fff4ce;
+      --bg-block: #fde7e9;
+      --border-warn:  #f7cc6f;
+      --border-block: #f4b8c0;
+      --text:     #201f1e;
+      --muted:    #605e5c;
+      --radius:   6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      background: #faf9f8;
+      padding: 16px;
+      line-height: 1.5;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #edebe9;
+    }
+
+    header svg { flex-shrink: 0; }
+
+    header h1 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--brand);
+    }
+
+    #status-banner {
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      font-weight: 600;
+      display: none;
+    }
+
+    #status-banner.warn  { background: var(--bg-warn);  color: var(--warn);  border: 1px solid var(--border-warn); }
+    #status-banner.block { background: var(--bg-block); color: var(--block); border: 1px solid var(--border-block); }
+    #status-banner.ok    { background: #dff6dd; color: #107c10; border: 1px solid #9fd89f; }
+
+    #violations-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .violation-card {
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      border-left: 4px solid;
+    }
+
+    .violation-card.warn  {
+      background: var(--bg-warn);
+      border-left-color: var(--warn);
+    }
+
+    .violation-card.block {
+      background: var(--bg-block);
+      border-left-color: var(--block);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .badge.warn  { background: var(--warn);  color: #fff; }
+    .badge.block { background: var(--block); color: #fff; }
+
+    .card-detail { color: var(--text); font-size: 12px; }
+
+    .affected-list {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .affected-list span {
+      display: inline-block;
+      background: rgba(0,0,0,0.07);
+      border-radius: 3px;
+      padding: 1px 5px;
+      margin: 1px 2px 1px 0;
+    }
+
+    section.analyst-section {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #edebe9;
+    }
+
+    section.analyst-section label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    section.analyst-section input {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #c8c6c4;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    section.analyst-section input:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 2px rgba(0,120,212,0.2);
+    }
+
+    section.action-section {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    button {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: opacity 0.15s;
+    }
+
+    button:disabled { opacity: 0.45; cursor: default; }
+
+    #btn-log-override {
+      background: var(--brand);
+      color: #fff;
+    }
+
+    #btn-log-override:not(:disabled):hover { opacity: 0.88; }
+
+    #btn-log-cancel {
+      background: #fff;
+      color: var(--text);
+      border-color: #c8c6c4;
+    }
+
+    #btn-log-cancel:not(:disabled):hover { background: #f3f2f1; }
+
+    #empty-state {
+      color: var(--muted);
+      text-align: center;
+      margin-top: 24px;
+      font-size: 12px;
+      display: none;
+    }
+
+    #confirmation-msg {
+      display: none;
+      margin-top: 12px;
+      font-size: 12px;
+      color: #107c10;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <!-- WiseTech shield icon (inline SVG — no external assets required) -->
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2L3 6v6c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V6L12 2Z"
+            fill="#0078d4" opacity="0.15"/>
+      <path d="M12 2L3 6v6c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V6L12 2Z"
+            stroke="#0078d4" stroke-width="1.5" fill="none"/>
+      <path d="M8.5 12l2.5 2.5 4.5-4.5" stroke="#0078d4" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <h1>WTG DLP — Violation Details</h1>
+  </header>
+
+  <div id="status-banner" role="alert"></div>
+  <div id="violations-list"></div>
+  <div id="empty-state">No violations found for this email.</div>
+
+  <!-- Analyst name + action buttons — only shown when violations exist -->
+  <section class="analyst-section" id="analyst-section" style="display:none;">
+    <label for="analyst-name">Your name (for audit log)</label>
+    <input
+      type="text"
+      id="analyst-name"
+      placeholder="e.g. Jane Smith"
+      autocomplete="off"
+    />
+  </section>
+
+  <section class="action-section" id="action-section" style="display:none;">
+    <button id="btn-log-override" disabled>Log: Send Anyway</button>
+    <button id="btn-log-cancel">Log: Don't Send (cancel)</button>
+    <div id="confirmation-msg">✔ Decision recorded in audit log.</div>
+  </section>
+
+  <script
+    type="text/javascript"
+    src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js">
+  </script>
+  <script type="text/javascript" src="taskpane.js"></script>
+</body>
+</html>
