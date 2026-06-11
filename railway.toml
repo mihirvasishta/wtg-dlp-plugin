@@ -2,12 +2,11 @@
 # https://docs.railway.app/reference/config-as-code
 
 [build]
-builder = "NIXPACKS"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-# Railway sets $PORT automatically; uvicorn binds to it.
-# config.py reads PORT → DLP_PORT → 8443 in that priority order.
-startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT"
+startCommand = "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
 healthcheckPath = "/health"
 healthcheckTimeout = 30
 restartPolicyType = "ON_FAILURE"
