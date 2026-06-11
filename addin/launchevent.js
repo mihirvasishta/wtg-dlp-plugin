@@ -44,12 +44,15 @@ Office.onReady(function () {
    ========================================================================= */
 
 function onMessageSendHandler(event) {
+  var _payload = null;  // captured so handleDlpResult can pass it to logDecision
+
   collectEmailData()
     .then(function (payload) {
+      _payload = payload;
       return callDlpBackend(payload);
     })
     .then(function (result) {
-      handleDlpResult(event, result);
+      handleDlpResult(event, result, _payload);
     })
     .catch(function (err) {
       // Any uncaught error → fail open so send is never blocked by a bug
@@ -253,45 +256,46 @@ function callDlpBackend(payload) {
 /**
  * Inspect the DLP result and call event.completed() appropriately.
  *
- * - No violations            → allow send
- * - Warn violations only     → show native Smart Alerts dialog (PromptUser)
- * - Any block violation      → show dialog, send is hard-blocked
+ * Audit logging happens HERE, in the event handler, because the native
+ * Smart Alerts dialog is modal — the task pane ribbon button is blocked
+ * while it is open, so the task pane can never reliably be used for logging.
+ *
+ * Decision values logged:
+ *   "sent_clean"         — no violations, send allowed
+ *   "violations_detected"— violations found; user will see Send Anyway / Don't Send
+ *                          (we cannot detect which button they ultimately click)
+ *   "blocked"            — block-level violation, send prevented
  */
-function handleDlpResult(event, result) {
+function handleDlpResult(event, result, payload) {
   var violations = result.violations || [];
 
   if (violations.length === 0) {
-    // Clean send — no DLP issues
-    logDecision(event._item, violations, "sent_clean");
+    logDecision(payload, violations, "sent_clean");
     event.completed({ allowEvent: true });
     return;
   }
 
   var hasBlock = violations.some(function (v) { return v.severity === "block"; });
 
-  // Store violations in roaming settings so the task pane can read them
+  // Log now — this is the only reliable moment we have all data together
+  logDecision(payload, violations, hasBlock ? "blocked" : "violations_detected");
+
+  // Store violations in roaming settings so the task pane can show detail cards
   try {
-    Office.context.roamingSettings.set(
-      "wtg_dlp_violations",
-      JSON.stringify(violations)
-    );
+    Office.context.roamingSettings.set("wtg_dlp_violations", JSON.stringify(violations));
     Office.context.roamingSettings.saveAsync(function () {});
   } catch (e) {
-    // Non-fatal — task pane won't show detail cards but native dialog still shows
     console.warn("[WTG DLP] Could not save roaming settings:", e);
   }
 
   var errorMessage = buildDialogMessage(violations, hasBlock);
 
   if (hasBlock) {
-    // Hard block — user cannot override
     event.completed({
       allowEvent: false,
       errorMessage: errorMessage,
-      // No sendModeOverride → OWA only shows "Don't Send", no "Send Anyway"
     });
   } else {
-    // Warn only — user can choose to send anyway
     event.completed({
       allowEvent: false,
       errorMessage: errorMessage,
@@ -338,34 +342,35 @@ function buildDialogMessage(violations, hasBlock) {
    ========================================================================= */
 
 /**
- * Send an audit record to the backend.
- * Called after a clean send; for overrides / cancellations the task pane
- * calls the audit endpoint directly when the analyst clicks "Send Anyway"
- * or "Don't Send" in the native dialog.
+ * POST an audit record to the backend using the full email payload.
  *
- * Note: for clean sends, Office fires onMessageSend before the message is
- * actually dispatched, so we log the intent here.
+ * Called directly from handleDlpResult() — the only point in the flow
+ * where we have the complete email data AND the DLP result together.
+ * The Smart Alerts dialog is modal so the task pane cannot be opened
+ * while it is visible; logging from the event handler is the only
+ * reliable approach.
+ *
+ * decision values:
+ *   "sent_clean"          — no violations detected
+ *   "violations_detected" — warn violations found; dialog shown to user
+ *   "blocked"             — block violation; send prevented
  */
-function logDecision(item, violations, decision) {
-  if (!AUDIT_BACKEND_URL || AUDIT_BACKEND_URL.indexOf("BASTION_HOSTNAME") !== -1) {
-    // Audit endpoint not yet configured — skip silently
-    return;
+function logDecision(payload, violations, decision) {
+  if (!AUDIT_BACKEND_URL || AUDIT_BACKEND_URL.indexOf("BACKEND_URL") !== -1) {
+    return;  // URL not configured yet
   }
+  if (!payload) return;
 
-  // For a clean send we don't have full payload here (already sent to DLP
-  // backend). Send a minimal record.
   var record = {
-    mailbox_address: Office.context.mailbox.userProfile
-      ? Office.context.mailbox.userProfile.emailAddress
-      : "",
-    sender_upn: Office.context.mailbox.userProfile
-      ? Office.context.mailbox.userProfile.emailAddress
-      : "",
-    analyst_name: "",  // not available in event handler; task pane sets this
-    recipients: { to: [], cc: [], bcc: [] },
-    subject: "",
-    body_text: "",
-    attachments: [],
+    mailbox_address: payload.mailbox_address || "",
+    sender_upn: payload.sender_upn || "",
+    analyst_name: "",  // not available at event time; task pane can add this separately
+    recipients: payload.recipients || { to: [], cc: [], bcc: [] },
+    subject: payload.subject || "",
+    body_text: payload.body_text || "",
+    attachments: (payload.attachments || []).map(function (a) {
+      return { name: a.name, size_bytes: a.size_bytes, content_type: a.content_type };
+    }),
     violations: violations,
     decision: decision,
   };
