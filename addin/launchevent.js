@@ -149,27 +149,43 @@ function getBodyTextAsync(item) {
 
 /**
  * Collect attachment metadata + Base64 content for each directly uploaded file.
- * OneDrive/SharePoint link attachments return no content (handled gracefully).
+ * Uses getAttachmentsAsync() — the correct async API for compose mode.
+ * item.attachments (synchronous property) is unreliable in the Smart Alerts
+ * event runtime and consistently returns an empty array in OWA.
  */
 function getAttachmentsWithContent(item) {
-  var attachments = item.attachments || [];
+  return new Promise(function (resolve) {
+    if (!item.getAttachmentsAsync) {
+      // Requirement set < 1.8 — no attachment access at all
+      resolve([]);
+      return;
+    }
 
-  if (!attachments || attachments.length === 0) {
-    return Promise.resolve([]);
-  }
+    item.getAttachmentsAsync(function (asyncResult) {
+      if (
+        asyncResult.status !== Office.AsyncResultStatus.Succeeded ||
+        !asyncResult.value ||
+        asyncResult.value.length === 0
+      ) {
+        resolve([]);
+        return;
+      }
 
-  var contentPromises = attachments.map(function (att) {
-    return getAttachmentContentAsync(item, att.id).then(function (b64) {
-      return {
-        name: att.name || "",
-        content_type: att.contentType || "",
-        size_bytes: att.size || 0,
-        content_b64: b64,  // null if not available (OneDrive links etc.)
-      };
+      var attachments = asyncResult.value;
+      var contentPromises = attachments.map(function (att) {
+        return getAttachmentContentAsync(item, att.id).then(function (b64) {
+          return {
+            name: att.name || "",
+            content_type: att.contentType || "",
+            size_bytes: att.size || 0,
+            content_b64: b64,  // null if cloud attachment or content unavailable
+          };
+        });
+      });
+
+      Promise.all(contentPromises).then(resolve);
     });
   });
-
-  return Promise.all(contentPromises);
 }
 
 /** Fetch Base64 content for one attachment. Returns null on failure. */
