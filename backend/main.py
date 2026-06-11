@@ -129,9 +129,10 @@ async def audit_log(body: AuditRequest):
     """
     Record the analyst's decision after a DLP check.
 
-    Called by launchevent.js once the user clicks Send Anyway / Don't Send.
-    Returns 204 No Content — the add-in does not wait for a body.
+    Called by the task pane when the analyst clicks Send Anyway / Don't Send.
+    Returns 204 No Content.
     """
+    print(f"[audit] decision='{body.decision}' analyst='{body.analyst_name}' mailbox='{body.mailbox_address}' violations={[v.rule_id if hasattr(v, 'rule_id') else v.get('rule_id') for v in body.violations]}")
     try:
         log_check(
             audit_log_path=config.AUDIT_LOG_PATH,
@@ -148,9 +149,9 @@ async def audit_log(body: AuditRequest):
             violations=[v if isinstance(v, dict) else v.model_dump() for v in body.violations],
             decision=body.decision,
         )
+        print(f"[audit] written to {config.AUDIT_LOG_PATH}")
     except Exception as exc:
-        # Don't let audit failures surface to the user
-        print(f"[error] Audit log failed: {exc}")
+        print(f"[audit] ERROR: {exc}")
 
 
 # ---------------------------------------------------------------------------
@@ -169,6 +170,28 @@ if _addin_dir.exists():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/debug/audit")
+async def debug_audit(last: int = 20):
+    """
+    Return the last N lines of the audit log as JSON.
+    Useful on Railway where the filesystem is not directly browsable.
+    GET https://<railway-url>/debug/audit?last=20
+    """
+    audit_path = Path(config.AUDIT_LOG_PATH)
+    if not audit_path.exists():
+        return {"audit_log_path": str(audit_path.resolve()), "entries": [], "note": "File does not exist yet — no audit records written"}
+    import json as _json
+    lines = audit_path.read_text(encoding="utf-8").strip().splitlines()
+    tail = lines[-last:] if len(lines) > last else lines
+    entries = []
+    for line in tail:
+        try:
+            entries.append(_json.loads(line))
+        except Exception:
+            entries.append({"raw": line})
+    return {"audit_log_path": str(audit_path.resolve()), "total_entries": len(lines), "returned": len(entries), "entries": entries}
 
 
 @app.get("/debug/info")
