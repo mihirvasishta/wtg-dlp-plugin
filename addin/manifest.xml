@@ -59,7 +59,6 @@
     <Form xsi:type="ItemEdit">
       <DesktopSettings>
         <SourceLocation DefaultValue="https://wtg-dlp-plugin-production.up.railway.app/addin/taskpane.html" />
-        <RequestedHeight>232</RequestedHeight>
       </DesktopSettings>
     </Form>
   </FormSettings>
