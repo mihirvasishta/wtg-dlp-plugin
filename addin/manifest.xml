@@ -165,13 +165,13 @@
         </bt:Urls>
 
         <bt:ShortStrings>
-          <bt:String id="GroupLabel"           DefaultValue="DLP Check" />
-          <bt:String id="TaskpaneButton.Label"  DefaultValue="DLP Violations" />
-          <bt:String id="TaskpaneButton.Tooltip"
-                     DefaultValue="View DLP violation details for this email." />
+          <bt:String id="GroupLabel"          DefaultValue="DLP Check" />
+          <bt:String id="TaskpaneButton.Label" DefaultValue="DLP Violations" />
         </bt:ShortStrings>
 
         <bt:LongStrings>
+          <bt:String id="TaskpaneButton.Tooltip"
+                     DefaultValue="View DLP violation details for this email." />
           <bt:String id="TaskpaneButton.Description"
                      DefaultValue="Shows detailed DLP violation cards for the current email." />
         </bt:LongStrings>
