@@ -89,7 +89,8 @@ async def dlp_check(request: DLPCheckRequest):
     Returns violations and an allow flag.
     """
     try:
-        print(f"[api] /dlp/check mailbox='{request.mailbox_address}' to={request.recipients.to} subject='{request.subject[:60]}'")
+        att_names = [a.name for a in request.attachments]
+        print(f"[api] /dlp/check mailbox='{request.mailbox_address}' to={request.recipients.to} subject='{request.subject[:60]}' attachments={att_names}")
         response = await run_checks(request, _data_source)
         print(f"[api] result: allow={response.allow} violations={[v.rule_id for v in response.violations]}")
         return response
