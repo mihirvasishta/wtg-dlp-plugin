@@ -18,10 +18,22 @@ from dlp.data_source import PartnerEntry, extract_domain
 
 
 def _contains_partner_name(text: str, partner_name: str) -> bool:
-    """Case-insensitive whole-word search for partner_name in text."""
+    """
+    Case-insensitive search for partner_name in text.
+
+    Spaces in the partner name are matched flexibly against common
+    filename and text separators (space, underscore, hyphen, dot) so
+    that "Globex Industries" matches all of:
+      - "Globex Industries"   (subject / body text)
+      - "Globex_Industries"   (filename with underscores)
+      - "Globex-Industries"   (filename with hyphens)
+      - "Globex.Industries"   (filename with dots)
+    """
     if not text or not partner_name:
         return False
-    pattern = re.escape(partner_name)
+    # Escape each word individually, then join with a flexible separator
+    parts = [re.escape(word) for word in partner_name.split()]
+    pattern = r"[\s_\-\.]+".join(parts)
     return bool(re.search(pattern, text, re.IGNORECASE))
 
 
