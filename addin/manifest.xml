@@ -90,14 +90,16 @@
       <Hosts>
         <Host xsi:type="MailHost">
 
+          <!-- Runtimes: required for event-based (Smart Alerts) add-ins in V1.1.
+               FunctionFile is for add-in commands only — do not use it here. -->
+          <Runtimes>
+            <Runtime resid="LaunchEvent.Url" lifetime="short" />
+          </Runtimes>
+
           <DesktopFormFactor>
 
             <!-- SupportsSharedFolders: REQUIRED for shared mailbox event interception -->
             <SupportsSharedFolders>true</SupportsSharedFolders>
-
-
-            <!-- Function file — hosts the OnMessageSend event handler -->
-            <FunctionFile resid="LaunchEvent.Url" />
 
             <!-- Task pane — shows violation detail cards -->
             <ExtensionPoint xsi:type="MessageComposeCommandSurface">
