@@ -8,7 +8,7 @@
  * Plain JS — no TypeScript or webpack needed for prototype.
  */
 
-var AUDIT_BACKEND_URL = "https://BACKEND_URL/api/audit/log";
+var AUDIT_BACKEND_URL = "https://wtg-dlp-plugin-production.up.railway.app/api/audit/log";
 
 /* =========================================================================
    Office.js initialisation

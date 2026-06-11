@@ -24,8 +24,8 @@
    in manifest.xml.
    ========================================================================= */
 
-var DLP_BACKEND_URL  = "https://BACKEND_URL/api/dlp/check";
-var AUDIT_BACKEND_URL = "https://BACKEND_URL/api/audit/log";
+var DLP_BACKEND_URL  = "https://wtg-dlp-plugin-production.up.railway.app/api/dlp/check";
+var AUDIT_BACKEND_URL = "https://wtg-dlp-plugin-production.up.railway.app/api/audit/log";
 var FETCH_TIMEOUT_MS = 8000;  // fail-open after 8 s
 
 
