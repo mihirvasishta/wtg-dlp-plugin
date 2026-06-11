@@ -147,7 +147,14 @@
       </Hosts>
 
       <Resources>
-        <!-- URLs — all served from the bastion HTTPS server -->
+        <!-- Schema-required order: Images → Urls → ShortStrings → LongStrings -->
+
+        <bt:Images>
+          <bt:Image id="Icon.16x16"  DefaultValue="https://wtg-dlp-plugin-production.up.railway.app/addin/assets/icon-16.png" />
+          <bt:Image id="Icon.32x32"  DefaultValue="https://wtg-dlp-plugin-production.up.railway.app/addin/assets/icon-32.png" />
+          <bt:Image id="Icon.80x80"  DefaultValue="https://wtg-dlp-plugin-production.up.railway.app/addin/assets/icon-80.png" />
+        </bt:Images>
+
         <bt:Urls>
           <bt:Url id="LaunchEvent.Url"
                   DefaultValue="https://wtg-dlp-plugin-production.up.railway.app/addin/launchevent.html" />
@@ -155,7 +162,6 @@
                   DefaultValue="https://wtg-dlp-plugin-production.up.railway.app/addin/taskpane.html" />
         </bt:Urls>
 
-        <!-- Short strings -->
         <bt:ShortStrings>
           <bt:String id="GroupLabel"           DefaultValue="DLP Check" />
           <bt:String id="TaskpaneButton.Label"  DefaultValue="DLP Violations" />
@@ -163,18 +169,10 @@
                      DefaultValue="View DLP violation details for this email." />
         </bt:ShortStrings>
 
-        <!-- Long strings (not used here but schema requires the section) -->
         <bt:LongStrings>
           <bt:String id="TaskpaneButton.Description"
                      DefaultValue="Shows detailed DLP violation cards for the current email." />
         </bt:LongStrings>
-
-        <!-- Icons — placeholder URLs; replace with real icon files -->
-        <bt:Images>
-          <bt:Image id="Icon.16x16"  DefaultValue="https://wtg-dlp-plugin-production.up.railway.app/addin/assets/icon-16.png" />
-          <bt:Image id="Icon.32x32"  DefaultValue="https://wtg-dlp-plugin-production.up.railway.app/addin/assets/icon-32.png" />
-          <bt:Image id="Icon.80x80"  DefaultValue="https://wtg-dlp-plugin-production.up.railway.app/addin/assets/icon-80.png" />
-        </bt:Images>
       </Resources>
 
     </VersionOverrides>
