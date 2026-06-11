@@ -318,19 +318,19 @@ Use the TC-004 setup (partner name in subject, wrong recipient).
 
 | TC | Description | Pass / Fail | Notes |
 |---|---|---|---|
-| TC-001 | Clean send | | |
-| TC-002 | Unknown domain | | |
-| TC-003 | Multiple unknown domains | | |
-| TC-004 | Partner in subject, wrong recipient | | |
-| TC-005 | Partner in body, wrong recipient | | |
-| TC-006 | Correct pairing — no violation | | |
-| TC-007 | Two partners, one unmatched | | |
-| TC-008 | Partner in filename | | |
-| TC-009 | Partner in text file content | | |
-| TC-010 | Blocked extension | | |
-| TC-011 | ZIP with blocked member | | |
-| TC-012 | Warn on archive | | |
-| TC-013 | Override warn + audit log | | |
-| TC-014 | Cancel on warn | | |
-| TC-015 | Fail-open | | |
-| TC-016 | Multiple violations | | |
+| TC-001 | Clean send |Pass | |
+| TC-002 | Unknown domain |Pass | |
+| TC-003 | Multiple unknown domains | Pass| |
+| TC-004 | Partner in subject, wrong recipient |Pass | |
+| TC-005 | Partner in body, wrong recipient |Pass | |
+| TC-006 | Correct pairing — no violation |Pass | |
+| TC-007 | Two partners, one unmatched |Pass | |
+| TC-008 | Partner in filename |Pass | |
+| TC-009 | Partner in text file content |Pass | |
+| TC-010 | Blocked extension |Pass | |
+| TC-011 | ZIP with blocked member |Pass | |
+| TC-012 | Warn on archive |Pass | |
+| TC-013 | Override warn + audit log |Pass | |
+| TC-014 | Cancel on warn |Pass | |
+| TC-015 | Fail-open |Unable to test | |
+| TC-016 | Multiple violations |Pass | |
