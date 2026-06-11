@@ -1,0 +1,4 @@
+Globex Industries quarterly data — Q2 report.
+
+This file triggers both the filename scan and the content scan (TC-016).
+Partner name appears in the filename AND in the body of this file.

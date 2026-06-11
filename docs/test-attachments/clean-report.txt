@@ -1,0 +1,4 @@
+Monthly summary report.
+
+This is a clean attachment — no partner names, no blocked extensions.
+Used for TC-001 and TC-006 to confirm clean sends pass without violation.

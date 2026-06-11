@@ -1,0 +1,6 @@
+Q2 financial summary for Globex Industries.
+Revenue: $4.2M
+Costs: $2.1M
+Net: $2.1M
+
+Prepared by: Data Operations team

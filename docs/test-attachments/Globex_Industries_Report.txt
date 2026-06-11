@@ -1,0 +1,3 @@
+This file's name triggers the partner reference filename scan (TC-008).
+The filename contains "Globex Industries" which matches the DLP partner list.
+Content does not need to contain partner names for this test case.
