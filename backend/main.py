@@ -89,7 +89,9 @@ async def dlp_check(request: DLPCheckRequest):
     Returns violations and an allow flag.
     """
     try:
+        print(f"[api] /dlp/check mailbox='{request.mailbox_address}' to={request.recipients.to} subject='{request.subject[:60]}'")
         response = await run_checks(request, _data_source)
+        print(f"[api] result: allow={response.allow} violations={[v.rule_id for v in response.violations]}")
         return response
     except FileNotFoundError:
         # No CSV found for this mailbox — fail open with a single warn
@@ -166,6 +168,24 @@ if _addin_dir.exists():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/debug/info")
+async def debug_info():
+    """
+    Returns runtime path info and the list of CSV files found.
+    Use this to verify the backend can see the DLP list files.
+    GET https://<railway-url>/debug/info
+    """
+    import glob as _glob
+    dlp_dir = Path(config.DLP_LIST_DIR)
+    csv_files = [Path(f).name for f in _glob.glob(str(dlp_dir / "*.csv"))]
+    return {
+        "dlp_list_dir": str(dlp_dir.resolve()),
+        "dlp_dir_exists": dlp_dir.exists(),
+        "csv_files_found": csv_files,
+        "audit_log_path": str(Path(config.AUDIT_LOG_PATH).resolve()),
+    }
 
 
 # ---------------------------------------------------------------------------

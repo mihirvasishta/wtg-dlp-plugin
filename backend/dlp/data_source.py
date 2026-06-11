@@ -103,14 +103,18 @@ class CSVDLPSource(DLPDataSource):
 
     async def get_partner_list(self, mailbox_address: str) -> List[PartnerEntry]:
         path = self._csv_path(mailbox_address)
+        print(f"[dlp] mailbox_address='{mailbox_address}' → csv_path='{path}' exists={os.path.isfile(path)}")
         if not os.path.isfile(path):
+            print(f"[dlp] WARNING: no DLP list found for '{mailbox_address}' — returning empty partner list (all checks will pass)")
             return []
 
         mtime = os.path.getmtime(path)
         cached = self._cache.get(mailbox_address)
         if cached and cached[0] == mtime:
+            print(f"[dlp] cache hit for '{mailbox_address}' ({len(cached[1])} partners)")
             return cached[1]
 
         entries = self._load_csv(path)
         self._cache[mailbox_address] = (mtime, entries)
+        print(f"[dlp] loaded {len(entries)} partners from '{path}'")
         return entries
