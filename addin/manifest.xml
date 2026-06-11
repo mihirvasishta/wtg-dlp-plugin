@@ -90,10 +90,11 @@
       <Hosts>
         <Host xsi:type="MailHost">
 
-          <!-- SupportsSharedFolders: REQUIRED for shared mailbox event interception -->
-          <SupportsSharedFolders>true</SupportsSharedFolders>
-
           <DesktopFormFactor>
+
+            <!-- SupportsSharedFolders: REQUIRED for shared mailbox event interception -->
+            <SupportsSharedFolders>true</SupportsSharedFolders>
+
 
             <!-- Function file — hosts the OnMessageSend event handler -->
             <FunctionFile resid="LaunchEvent.Url" />
