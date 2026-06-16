@@ -1,0 +1,66 @@
+# =============================================================================
+# WTG DLP Plugin — Build and push Docker image to GitHub Container Registry
+#
+# Triggers on every push to master.
+# Image published to: ghcr.io/mihirvasishta/wtg-dlp-plugin:latest
+#
+# No Docker or Azure CLI needed locally — GitHub builds the image in the cloud.
+# After this runs, point your Azure Container App at the image URL above.
+# =============================================================================
+
+name: Build and push Docker image
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:   # allow manual trigger from GitHub Actions UI
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}   # mihirvasishta/wtg-dlp-plugin
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write   # required to push to ghcr.io
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}   # auto-provided by GitHub, no setup needed
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=sha-
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Print image URL
+        run: |
+          echo "Image published to:"
+          echo "  ghcr.io/${{ github.repository }}:latest"
+          echo ""
+          echo "Use this URL in Azure Container Apps → Container → Image source."
