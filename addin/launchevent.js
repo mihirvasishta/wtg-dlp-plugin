@@ -14,17 +14,17 @@
 /* =========================================================================
    Configuration
    =========================================================================
-   Replace AZURE_APP_FQDN with your Azure Container App's hostname.
+   Replace wtg-dlp-plugin.lemonhill-d4c8d24d.centralindia.azurecontainerapps.io with your Azure Container App's hostname.
    Get it with:
      az containerapp show --name wtg-dlp-plugin --resource-group wtg-dlp-rg \
        --query "properties.configuration.ingress.fqdn" -o tsv
 
-   Do a global find-and-replace on "AZURE_APP_FQDN" in this file,
+   Do a global find-and-replace on "wtg-dlp-plugin.lemonhill-d4c8d24d.centralindia.azurecontainerapps.io" in this file,
    addin/taskpane.js, and addin/manifest.xml.
    ========================================================================= */
 
-var DLP_BACKEND_URL  = "https://AZURE_APP_FQDN/api/dlp/check";
-var AUDIT_BACKEND_URL = "https://AZURE_APP_FQDN/api/audit/log";
+var DLP_BACKEND_URL  = "https://wtg-dlp-plugin.lemonhill-d4c8d24d.centralindia.azurecontainerapps.io/api/dlp/check";
+var AUDIT_BACKEND_URL = "https://wtg-dlp-plugin.lemonhill-d4c8d24d.centralindia.azurecontainerapps.io/api/audit/log";
 var FETCH_TIMEOUT_MS = 8000;  // fail-open after 8 s
 
 

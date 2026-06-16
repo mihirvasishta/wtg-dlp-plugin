@@ -8,7 +8,7 @@
  * Plain JS — no TypeScript or webpack needed for prototype.
  */
 
-var AUDIT_BACKEND_URL = "https://AZURE_APP_FQDN/api/audit/log";
+var AUDIT_BACKEND_URL = "https://wtg-dlp-plugin.lemonhill-d4c8d24d.centralindia.azurecontainerapps.io/api/audit/log";
 
 /* =========================================================================
    Office.js initialisation
