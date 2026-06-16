@@ -8,7 +8,8 @@
  * Plain JS — no TypeScript or webpack needed for prototype.
  */
 
-var AUDIT_BACKEND_URL = "https://wtg-dlp-plugin.lemonhill-d4c8d24d.centralindia.azurecontainerapps.io/api/audit/log";
+// Derived from the current page origin — works on any server without hardcoding
+var AUDIT_BACKEND_URL = window.location.origin + "/api/audit/log";
 
 /* =========================================================================
    Office.js initialisation

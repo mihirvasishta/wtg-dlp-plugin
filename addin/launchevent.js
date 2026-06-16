@@ -14,18 +14,25 @@
 /* =========================================================================
    Configuration
    =========================================================================
-   Replace wtg-dlp-plugin.lemonhill-d4c8d24d.centralindia.azurecontainerapps.io with your Azure Container App's hostname.
-   Get it with:
-     az containerapp show --name wtg-dlp-plugin --resource-group wtg-dlp-rg \
-       --query "properties.configuration.ingress.fqdn" -o tsv
-
-   Do a global find-and-replace on "wtg-dlp-plugin.lemonhill-d4c8d24d.centralindia.azurecontainerapps.io" in this file,
-   addin/taskpane.js, and addin/manifest.xml.
+   Backend URLs are derived from the origin that serves this script.
+   Since launchevent.js is served from https://SERVER/addin/launchevent.js
+   and the API lives at https://SERVER/api/..., the origin is always the
+   same host. No hardcoded URL needed — works on any server automatically.
    ========================================================================= */
 
-var DLP_BACKEND_URL  = "https://wtg-dlp-plugin.lemonhill-d4c8d24d.centralindia.azurecontainerapps.io/api/dlp/check";
-var AUDIT_BACKEND_URL = "https://wtg-dlp-plugin.lemonhill-d4c8d24d.centralindia.azurecontainerapps.io/api/audit/log";
-var FETCH_TIMEOUT_MS = 8000;  // fail-open after 8 s
+var _backendOrigin = (function () {
+  try {
+    // document.currentScript.src = "https://SERVER/addin/launchevent.js"
+    return new URL(document.currentScript.src).origin;
+  } catch (e) {
+    // Fallback for runtimes where currentScript is unavailable
+    return window.location.origin;
+  }
+}());
+
+var DLP_BACKEND_URL   = _backendOrigin + "/api/dlp/check";
+var AUDIT_BACKEND_URL = _backendOrigin + "/api/audit/log";
+var FETCH_TIMEOUT_MS  = 8000;  // fail-open after 8 s
 
 
 /* =========================================================================
