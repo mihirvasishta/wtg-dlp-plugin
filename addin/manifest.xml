@@ -1,24 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <!--
-  WTG DLP Plugin — Outlook Add-in Manifest
-  ==========================================
+  WTG DLP Plugin - Outlook Add-in Manifest
   OnMessageSend Smart Alerts add-in for shared mailbox DLP enforcement.
 
-  BEFORE DEPLOYMENT — replace every occurrence of:
-    wtg-dlp-plugin.lemonhill-d4c8d24d.centralindia.azurecontainerapps.io  → the full hostname of your Azure Container App (no https://)
-                      e.g. wtg-dlp-plugin.abcdef123.australiaeast.azurecontainerapps.io
-                      Get it with: az containerapp show --name wtg-dlp-plugin \
-                                     --resource-group wtg-dlp-rg \
-                                     --query "properties.configuration.ingress.fqdn" -o tsv
-
-    Do a global find-and-replace on "wtg-dlp-plugin.lemonhill-d4c8d24d.centralindia.azurecontainerapps.io" in this file,
-    addin/launchevent.js, and addin/taskpane.js — then re-upload to M365 Admin Center.
+  Backend: https://wtg-dlp-plugin.lemonhill-d4c8d24d.centralindia.azurecontainerapps.io
 
   IT prerequisites for each mailbox:
     1. OWA mailbox policy with OnSendAddinsEnabled = $true
-    2. Add-in deployed via M365 Admin Center → Integrated Apps → Upload custom app
-    3. Azure Container App is running and reachable from the analyst's browser
-       (TLS is provided by Azure — no separate certificate needed)
+    2. Add-in deployed via M365 Admin Center - Integrated Apps - Upload custom app
+    3. Azure Container App is running and reachable from the analyst browser
 -->
 <OfficeApp
   xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
