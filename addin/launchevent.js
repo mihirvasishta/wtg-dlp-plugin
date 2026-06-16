@@ -14,18 +14,17 @@
 /* =========================================================================
    Configuration
    =========================================================================
-   Replace the URLs below with your actual backend URL before deployment.
+   Replace AZURE_APP_FQDN with your Azure Container App's hostname.
+   Get it with:
+     az containerapp show --name wtg-dlp-plugin --resource-group wtg-dlp-rg \
+       --query "properties.configuration.ingress.fqdn" -o tsv
 
-   Railway:  https://your-project.up.railway.app
-   Bastion:  https://dlp.wisetechglobal.internal:8443
-
-   Do a global find-and-replace on "https://BACKEND_URL" across both
-   launchevent.js and taskpane.js, and on "BASTION_HOSTNAME:BASTION_PORT"
-   in manifest.xml.
+   Do a global find-and-replace on "AZURE_APP_FQDN" in this file,
+   addin/taskpane.js, and addin/manifest.xml.
    ========================================================================= */
 
-var DLP_BACKEND_URL  = "https://wtg-dlp-plugin-production.up.railway.app/api/dlp/check";
-var AUDIT_BACKEND_URL = "https://wtg-dlp-plugin-production.up.railway.app/api/audit/log";
+var DLP_BACKEND_URL  = "https://AZURE_APP_FQDN/api/dlp/check";
+var AUDIT_BACKEND_URL = "https://AZURE_APP_FQDN/api/audit/log";
 var FETCH_TIMEOUT_MS = 8000;  // fail-open after 8 s
 
 
