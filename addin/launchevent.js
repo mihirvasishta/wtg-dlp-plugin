@@ -94,13 +94,14 @@ function collectEmailData() {
     var bodyText    = results[4];
     var attachments = results[5];
 
-    var mailboxAddress = Office.context.mailbox.userProfile
-      ? Office.context.mailbox.userProfile.emailAddress
-      : "";
+    var profile        = Office.context.mailbox.userProfile;
+    var mailboxAddress = profile ? profile.emailAddress   : "";
+    var analystName    = profile ? profile.displayName    : "";
 
     return {
       mailbox_address: mailboxAddress,
       sender_upn: mailboxAddress,
+      analyst_name: analystName,
       recipients: { to: to, cc: cc, bcc: bcc },
       subject: subject,
       body_text: bodyText,
@@ -370,7 +371,7 @@ function logDecision(payload, violations, decision) {
   var record = {
     mailbox_address: payload.mailbox_address || "",
     sender_upn: payload.sender_upn || "",
-    analyst_name: "",  // not available at event time; task pane can add this separately
+    analyst_name: payload.analyst_name || "",
     recipients: payload.recipients || { to: [], cc: [], bcc: [] },
     subject: payload.subject || "",
     body_text: payload.body_text || "",
